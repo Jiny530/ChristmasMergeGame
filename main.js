@@ -21,8 +21,16 @@ class MainScene extends Phaser.Scene {
     this.setupPhysicsBounds(frameData);
     this.setupTouchControls(frameData);
     this.setupMergeEvents();
-    
+    this.setupScoreDisplay();
+
+    this.currentMaxTier = 1;
     this.createNewObject(frameData);
+  }
+
+  setupScoreDisplay() {
+    this.score = 0;
+    this.scoreText = this.add.text(10, 10, 'Score: 0', { font: '16px Arial', fill: '#fff' });
+    this.scoreByTier = [0, 10, 20, 40, 80, 160, 320];
   }
 
   setupMergeEvents() {
@@ -36,7 +44,7 @@ class MainScene extends Phaser.Scene {
 
         if (objectA instanceof MergeObject && objectB instanceof MergeObject) {
           if (objectA.isReleased && objectB.isReleased &&
-              objectA.level === objectB.level) 
+              objectA.tier === objectB.tier) 
               {
                 this.merge(objectA, objectB);
               }
@@ -58,19 +66,23 @@ class MainScene extends Phaser.Scene {
     const mergeX = (objectA.x + objectB.x) / 2;
     const mergeY = (objectA.y + objectB.y) / 2;
     
-    const newLevel = objectA.level + 1;
+    const mergeTier = objectA.tier + 1;
+    
+    if (mergeTier > this.currentMaxTier) {
+      this.currentMaxTier = mergeTier;
+    }
 
     objectA.destroy();
     objectB.destroy();
     
-    const newObject = new MergeObject(this, mergeX, mergeY, 'gift', null, {
+    const mergedObject = new MergeObject(this, mergeX, mergeY, mergeTier, null, {
       isStatic: false
     });
-    
-    newObject.level = newLevel;
-    newObject.isReleased = true;
-    
-    newObject.setScale(0.2 + (newLevel - 1) * 0.05);
+
+    mergedObject.isReleased = true;
+
+    this.addScore(mergeTier);
+
   }
 
   createFrame(ScreenWidth, ScreenHeight) {
@@ -107,23 +119,35 @@ class MainScene extends Phaser.Scene {
   }
 
   createNewObject(frameData){
-    this.newObject = new MergeObject(this, frameData.middleX, frameData.top - 50, 'gift', null, {
+    const randomTier = Phaser.Math.Between(1, Math.max(this.currentMaxTier-2,1));
+    
+    this.newObject = new MergeObject(this, frameData.middleX, frameData.top - 50, randomTier, null, {
       isStatic: true
     });
 
     this.newObject.disableCollision();
   }
 
+  
+  addScore(tier) {
+    const points = this.scoreByTier[tier - 1];
+    this.score += points;
+    
+    if (this.scoreText) 
+      this.scoreText.setText(`Score: ${this.score}`);    
+  }
+
+
   setupTouchControls(frameData) {
     this.isDragging = false;
     this.startTouchX = 0;
-    this.startGiftX = 0;
+    this.startObjectX = 0;
     
     this.input.on('pointerdown', (pointer) => {
       if (this.newObject && !this.newObject.isReleased && this.newObject.body && this.newObject.body.isStatic) {
         this.isDragging = true;
         this.startTouchX = pointer.x;
-        this.startGiftX = this.newObject.x;
+        this.startObjectX = this.newObject.x;
       }
     });
 
@@ -133,7 +157,7 @@ class MainScene extends Phaser.Scene {
         const leftLimit = frameData.left + this.newObject.displayWidth/2;
         const rightLimit = frameData.right - this.newObject.displayWidth/2;
 
-        this.newObject.x = Phaser.Math.Clamp(this.startGiftX + deltaX, leftLimit, rightLimit);
+        this.newObject.x = Phaser.Math.Clamp(this.startObjectX + deltaX, leftLimit, rightLimit);
       }
     });
 

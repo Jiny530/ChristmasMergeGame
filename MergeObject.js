@@ -1,20 +1,21 @@
 
 class MergeObject extends Phaser.Physics.Matter.Image {
-  constructor(scene, x, y, texture, frame, options) {
+  static textureByTier = ['gift', 'candy', 'cookie', 'bell', 'snowman', 'snowball', 'star'];
+  constructor(scene, x, y, tier, frame, options) {
 
     const defaultOptions = {
       isStatic: true,
       ...options
     };
-    
-    super(scene.matter.world, x, y, texture, frame, defaultOptions);
-    
+
+    super(scene.matter.world, x, y, MergeObject.textureByTier[tier - 1], frame, defaultOptions);
+
     scene.add.existing(this);
     this.scene = scene;
     
     this.setBounce(0.8);
     this.setMass(60);
-    this.setScale(0.2);
+    this.setScale(0.2 + (tier - 1) * 0.05);
 
     const fallbackRadius = Math.min(this.displayWidth, this.displayHeight) * 0.5;
     this.setCircle(fallbackRadius, { label: 'merge-circle' });
@@ -23,7 +24,7 @@ class MergeObject extends Phaser.Physics.Matter.Image {
       this.setStatic(true);
     }
 
-    this.level = 1;
+    this.tier = tier;
     this.isReleased = false;
     this.isMerging = false;
 
