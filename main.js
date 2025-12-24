@@ -23,11 +23,44 @@ class MainScene extends Phaser.Scene {
     
     this.setupPhysicsBounds(frameData);
     this.setupTouchControls(frameData);
-    this.setupMergeEvents();
+    this.setupCollisionEvents();
     this.setupScoreDisplay();
 
     this.currentMaxTier = 1;
     this.createNewObject(frameData);
+    
+    this.isGameOver = false;
+    this.GAME_OVER_HEIGHT = frameData.top - 20
+  }
+
+  checkIsGameOver(object) {
+    if (!(object instanceof MergeObject)) return false;
+    return object.y < this.GAME_OVER_HEIGHT;
+  }
+
+  OnGameOver() {
+    if (this.isGameOver) return;
+    this.isGameOver = true;
+
+    if (this.matter && this.matter.world) this.matter.world.enabled = false;
+
+    const cx = this.scale.width / 2;
+    const cy = this.scale.height / 2;
+
+    // overlay
+    const overlay = this.add.rectangle(cx, cy, 320, 180, 0x000000, 0.75);
+    const title = this.add.text(cx, cy - 40, 'Game Over', { font: '24px Arial', fill: '#fff' }).setOrigin(0.5);
+    const scoreText = this.add.text(cx, cy - 6, `Score: ${this.score || 0}`, { font: '16px Arial', fill: '#fff' }).setOrigin(0.5);
+
+    // restart button
+    const btn = this.add.rectangle(cx, cy + 34, 140, 40, 0x1e90ff).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const btnText = this.add.text(cx, cy + 34, 'Restart', { font: '16px Arial', fill: '#fff' }).setOrigin(0.5);
+
+    btn.on('pointerdown', () => {
+      this.scene.restart();
+    });
+    btn.on('pointerover', () => btn.setFillStyle(0x379bff));
+    btn.on('pointerout', () => btn.setFillStyle(0x1e90ff));
   }
 
   setupScoreDisplay() {
@@ -38,15 +71,23 @@ class MainScene extends Phaser.Scene {
     this.scoreByTier = Array.from({ length: this.MAX_TIER }, (_, i) => 1 * Math.pow(2, i));
   }
 
-  setupMergeEvents() {
+  setupCollisionEvents() {
   
     this.matter.world.on('collisionstart', (event) => {
+
+      if (this.isGameOver) return;
+
       event.pairs.forEach(pair => {
         const { bodyA, bodyB } = pair;
 
         const objectA = bodyA.gameObject;
         const objectB = bodyB.gameObject;
 
+        if (this.checkIsGameOver(objectA) || this.checkIsGameOver(objectB)) {
+          this.OnGameOver();
+          return;
+        }
+        
         if (objectA instanceof MergeObject && objectB instanceof MergeObject) {
           if (objectA.isReleased && objectB.isReleased &&
               objectA.tier === objectB.tier) 
@@ -145,6 +186,7 @@ class MainScene extends Phaser.Scene {
     this.isDragging = false;
     
     this.input.on('pointerdown', (pointer) => {
+      if (this.isGameOver) return;
       if (this.newObject && !this.newObject.isReleased && this.newObject.body && this.newObject.body.isStatic) {
         this.isDragging = true;
         this.setObjectXPosition(pointer.x, frameData);
@@ -152,12 +194,14 @@ class MainScene extends Phaser.Scene {
     });
 
     this.input.on('pointermove', (pointer) => {  
+      if (this.isGameOver) return;
       if (this.isDragging && this.newObject && pointer.isDown) {
         this.setObjectXPosition(pointer.x, frameData);
       }
     });
 
     this.input.on('pointerup', () => {
+      if (this.isGameOver) return;
       if (this.isDragging && this.newObject && !this.newObject.isReleased) {
         this.isDragging = false;
         
@@ -167,6 +211,7 @@ class MainScene extends Phaser.Scene {
     });
     
     this.input.on('pointerupoutside', () => {
+      if (this.isGameOver) return;
       if (this.isDragging && this.newObject && !this.newObject.isReleased) {
         this.isDragging = false;
         
