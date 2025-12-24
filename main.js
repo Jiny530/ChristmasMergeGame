@@ -4,14 +4,17 @@ class MainScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.image('frame', 'assets/images/frame.png');
     this.load.image('gift', 'assets/images/gift.png');
     this.load.image('candy', 'assets/images/candy.png');
+    this.load.image('socks', 'assets/images/socks.png');
     this.load.image('cookie', 'assets/images/cookie.png');
     this.load.image('bell', 'assets/images/bell.png');
     this.load.image('snowman', 'assets/images/snowman.png');
+    this.load.image('santahat', 'assets/images/santahat.png');
+    this.load.image('wreath', 'assets/images/wreath.png');
     this.load.image('snowball', 'assets/images/snowball.png');
     this.load.image('star', 'assets/images/star.png');
-    this.load.image('frame', 'assets/images/frame.png');
   }
 
   create() {
@@ -30,7 +33,9 @@ class MainScene extends Phaser.Scene {
   setupScoreDisplay() {
     this.score = 0;
     this.scoreText = this.add.text(10, 10, 'Score: 0', { font: '16px Arial', fill: '#fff' });
-    this.scoreByTier = [0, 10, 20, 40, 80, 160, 320];
+
+    this.MAX_TIER = MergeObject.textureByTier.length;
+    this.scoreByTier = Array.from({ length: this.MAX_TIER }, (_, i) => 1 * Math.pow(2, i));
   }
 
   setupMergeEvents() {
@@ -120,11 +125,9 @@ class MainScene extends Phaser.Scene {
 
   createNewObject(frameData){
     const randomTier = Phaser.Math.Between(1, Math.max(this.currentMaxTier-2,1));
-    
-    this.newObject = new MergeObject(this, frameData.middleX, frameData.top - 50, randomTier, null, {
+    this.newObject = new MergeObject(this, frameData.middleX, frameData.top, randomTier, null, {
       isStatic: true
     });
-
     this.newObject.disableCollision();
   }
 
@@ -140,24 +143,17 @@ class MainScene extends Phaser.Scene {
 
   setupTouchControls(frameData) {
     this.isDragging = false;
-    this.startTouchX = 0;
-    this.startObjectX = 0;
     
     this.input.on('pointerdown', (pointer) => {
       if (this.newObject && !this.newObject.isReleased && this.newObject.body && this.newObject.body.isStatic) {
         this.isDragging = true;
-        this.startTouchX = pointer.x;
-        this.startObjectX = this.newObject.x;
-      }
+        this.setObjectXPosition(pointer.x, frameData);
+        }
     });
 
     this.input.on('pointermove', (pointer) => {  
       if (this.isDragging && this.newObject && pointer.isDown) {
-        const deltaX = pointer.x - this.startTouchX;
-        const leftLimit = frameData.left + this.newObject.displayWidth/2;
-        const rightLimit = frameData.right - this.newObject.displayWidth/2;
-
-        this.newObject.x = Phaser.Math.Clamp(this.startObjectX + deltaX, leftLimit, rightLimit);
+        this.setObjectXPosition(pointer.x, frameData);
       }
     });
 
@@ -180,6 +176,14 @@ class MainScene extends Phaser.Scene {
     });
 
   }
+
+  setObjectXPosition(x, frameData) {
+    const leftLimit = frameData.left + this.newObject.displayWidth/2;
+    const rightLimit = frameData.right - this.newObject.displayWidth/2;
+
+    this.newObject.x = Phaser.Math.Clamp(x, leftLimit, rightLimit);
+  }
+
   update(time, delta) {
    
   }
