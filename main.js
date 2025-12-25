@@ -3,29 +3,9 @@ class MainScene extends Phaser.Scene {
     super("MainScene");
   }
 
-  preload() {
-    this.load.image('frame', 'assets/images/frame.png');
-    this.load.image('background', 'assets/images/background.png');
-    this.load.image('gift', 'assets/images/gift.png');
-    this.load.image('candy', 'assets/images/candy.png');
-    this.load.image('socks', 'assets/images/socks.png');
-    this.load.image('cookie', 'assets/images/cookie.png');
-    this.load.image('bell', 'assets/images/bell.png');
-    this.load.image('snowman', 'assets/images/snowman.png');
-    this.load.image('santahat', 'assets/images/santahat.png');
-    this.load.image('wreath', 'assets/images/wreath.png');
-    this.load.image('snowball', 'assets/images/snowball.png');
-    this.load.image('star', 'assets/images/star.png');
-    
-    this.load.audio('pop', ['assets/sounds/popSound.mp3']);
-    this.load.audio('bgm', ['assets/sounds/christmasBGM.mp3']);
-
-  }
-
   create() {
 
     const frameData = this.createFrame(this.scale.width, this.scale.height);
-    
     this.setupPhysicsBounds(frameData);
     this.setupTouchControls(frameData);
     this.setupCollisionEvents();
@@ -87,7 +67,7 @@ class MainScene extends Phaser.Scene {
     }).setOrigin(0, 0).setDepth(10);
 
     this.MAX_TIER = MergeObject.textureByTier.length;
-    this.scoreByTier = Array.from({ length: this.MAX_TIER }, (_, i) => 1 * Math.pow(2, i));
+    this.scoreByTier = Array.from({ length: this.MAX_TIER + 1 }, (_, i) => 1 * Math.pow(2, i));
   }
 
   setupCollisionEvents() {
@@ -142,13 +122,17 @@ class MainScene extends Phaser.Scene {
     objectA.destroy();
     objectB.destroy();
     
+    this.addScore(mergeTier);
+
+    if (mergeTier > this.MAX_TIER) {
+      return;
+    }
+
     const mergedObject = new MergeObject(this, mergeX, mergeY, mergeTier, null, {
       isStatic: false
     });
 
     mergedObject.isReleased = true;
-
-    this.addScore(mergeTier);
 
   }
 
@@ -272,7 +256,7 @@ const config = {
   physics: {
     default: "matter",
   },
-  scene: [MainScene],
+  scene: [TitleScene, MainScene]
 };
 
 // 게임 시작
