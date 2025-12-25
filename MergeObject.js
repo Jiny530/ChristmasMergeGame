@@ -13,7 +13,7 @@ class MergeObject extends Phaser.Physics.Matter.Image {
     scene.add.existing(this);
     this.scene = scene;
     
-    this.setBounce(0.5 + (tier - 1) * 0.05);
+    this.setBounce(0.8 + (tier - 1) * 0.05);
     this.setMass(Math.max(60 - (tier - 1) * 5, 10));
     this.setScale(0.1 + (tier - 1) * 0.05);
 

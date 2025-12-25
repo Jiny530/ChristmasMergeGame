@@ -45,14 +45,14 @@ class MainScene extends Phaser.Scene {
     const scoreText = this.add.text(cx, cy - 6, `Score: ${this.score || 0}`, { font: '16px Arial', fill: '#fff' }).setOrigin(0.5);
 
     // restart button
-    const btn = this.add.rectangle(cx, cy + 34, 140, 40, 0x1e90ff).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const btn = this.add.rectangle(cx, cy + 34, 140, 40, 0x76B947).setOrigin(0.5).setInteractive({ useHandCursor: true });
     const btnText = this.add.text(cx, cy + 34, 'Restart', { font: '16px Arial', fill: '#fff' }).setOrigin(0.5);
 
-    btn.on('pointerdown', () => {
+    btn.on('pointerup', () => {
       this.scene.restart();
     });
-    btn.on('pointerover', () => btn.setFillStyle(0x379bff));
-    btn.on('pointerout', () => btn.setFillStyle(0x1e90ff));
+    btn.on('pointerover', () => btn.setFillStyle(0x8FD14F));
+    btn.on('pointerout', () => btn.setFillStyle(0x6BBF59));
 
     this.bgm.stop();
   }
@@ -111,8 +111,8 @@ class MainScene extends Phaser.Scene {
     objectB.isMerging = true;
 
     const mergeX = (objectA.x + objectB.x) / 2;
-    const mergeY = (objectA.y + objectB.y) / 2;
-    
+    const mergeY = (objectA.y + objectB.y) / 2 - 5;    
+
     const mergeTier = objectA.tier + 1;
     
     if (mergeTier > this.currentMaxTier) {
@@ -174,13 +174,29 @@ class MainScene extends Phaser.Scene {
   }
 
   createNewObject(frameData){
-    const randomTier = Phaser.Math.Between(1, Math.max(this.currentMaxTier-2,1));
+    const randomTier = this.makeWeightedRandomTier();
     this.newObject = new MergeObject(this, frameData.middleX, frameData.top, randomTier, null, {
       isStatic: true
     });
     this.newObject.disableCollision();
   }
 
+  makeWeightedRandomTier()
+  {
+    const n = Math.max(this.currentMaxTier-2,1);
+    const totalWeight = (n * (n + 1)) / 2; 
+    
+    let r = Math.random() * totalWeight; 
+    for (let i = 1; i <= n; i++) 
+    { 
+      const weight = n - i + 1; 
+      if (r < weight) {
+        return i; 
+      }
+      r -= weight; 
+    }
+    return 1;
+  }
   
   addScore(tier) {
     const points = this.scoreByTier[tier - 1];
