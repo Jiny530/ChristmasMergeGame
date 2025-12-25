@@ -5,6 +5,7 @@ class MainScene extends Phaser.Scene {
 
   preload() {
     this.load.image('frame', 'assets/images/frame.png');
+    this.load.image('background', 'assets/images/background.png');
     this.load.image('gift', 'assets/images/gift.png');
     this.load.image('candy', 'assets/images/candy.png');
     this.load.image('socks', 'assets/images/socks.png');
@@ -15,6 +16,10 @@ class MainScene extends Phaser.Scene {
     this.load.image('wreath', 'assets/images/wreath.png');
     this.load.image('snowball', 'assets/images/snowball.png');
     this.load.image('star', 'assets/images/star.png');
+    
+    this.load.audio('pop', ['assets/sounds/popSound.mp3']);
+    this.load.audio('bgm', ['assets/sounds/christmasBGM.mp3']);
+
   }
 
   create() {
@@ -25,12 +30,19 @@ class MainScene extends Phaser.Scene {
     this.setupTouchControls(frameData);
     this.setupCollisionEvents();
     this.setupScoreDisplay();
+    this.setupSounds()
 
     this.currentMaxTier = 1;
-    this.createNewObject(frameData);
-    
     this.isGameOver = false;
-    this.GAME_OVER_HEIGHT = frameData.top - 20
+    this.GAME_OVER_HEIGHT = frameData.top - 20;
+
+    this.createNewObject(frameData);
+  }
+
+  setupSounds() {
+    this.mergeSound = this.sound.add('pop', { volume: 0.6 });
+    this.bgm = this.sound.add('bgm', { volume: 0.5, loop: true });
+    this.bgm.play();
   }
 
   checkIsGameOver(object) {
@@ -40,7 +52,7 @@ class MainScene extends Phaser.Scene {
 
   OnGameOver() {
     if (this.isGameOver) return;
-    this.isGameOver = true;
+    this.isGameOver = true; 
 
     if (this.matter && this.matter.world) this.matter.world.enabled = false;
 
@@ -61,11 +73,18 @@ class MainScene extends Phaser.Scene {
     });
     btn.on('pointerover', () => btn.setFillStyle(0x379bff));
     btn.on('pointerout', () => btn.setFillStyle(0x1e90ff));
+
+    this.bgm.stop();
   }
 
   setupScoreDisplay() {
     this.score = 0;
-    this.scoreText = this.add.text(10, 10, 'Score: 0', { font: '16px Arial', fill: '#fff' });
+    this.scoreText = this.add.text(12, 12, 'Score: 0', { 
+      font: 'bold 22px Arial',
+      fill: '#ffffff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0, 0).setDepth(10);
 
     this.MAX_TIER = MergeObject.textureByTier.length;
     this.scoreByTier = Array.from({ length: this.MAX_TIER }, (_, i) => 1 * Math.pow(2, i));
@@ -106,6 +125,8 @@ class MainScene extends Phaser.Scene {
       return;
     }
     
+    this.mergeSound.play();
+
     objectA.isMerging = true;
     objectB.isMerging = true;
 
@@ -136,9 +157,13 @@ class MainScene extends Phaser.Scene {
     const middleX = ScreenWidth/2;
     const middleY = ScreenHeight/2;
 
+    this.add.image(middleX, middleY, 'background')
+      .setOrigin(0.5, 0.5)
+      .setScale(0.5);
+
     const frame = this.add.image(middleX, middleY, 'frame')
       .setOrigin(0.5, 0.5)
-      .setScale(0.8);
+      .setScale(0.3);
     
     const width = frame.displayWidth;
     const height = frame.displayHeight;
